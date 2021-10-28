@@ -6,8 +6,7 @@ namespace sc_t3
 {
     public class WssClient : MonoBehaviour
     {
-        public event Action<Doc> OnMessage;
-        
+               
         private WebSocket websocket;
 
         [SerializeField]
@@ -21,8 +20,10 @@ namespace sc_t3
         [SerializeField]
         private string Signature = "4d713fc31dd26bd902ad9d753326a9b111fe0747f3dabdae535e981258fe1d4f";
 
-
-        public void SendRequest()
+        private Action<Doc> callback;
+        public bool IsSocketOpen => websocket.State == WebSocketState.Open;
+       
+        public void SendRequest(Action<Doc> onMessage)
         {
             Request req = new Request();
             req.bulkResult = bulkResult;
@@ -30,9 +31,9 @@ namespace sc_t3
             req.@params = new Params();
             req.@params.ViewerID = ViewerID;
             req.@params.Signature = Signature;
+            callback = onMessage;
             SendWebSocketMessage(JsonUtility.ToJson(req));
         }
-
         async void Start()
         {
             websocket = new WebSocket(url);
@@ -40,8 +41,7 @@ namespace sc_t3
             websocket.OnOpen += () =>
             {
                 Debug.Log("Connection open!");
-                SendRequest();
-               
+                             
             };
 
             websocket.OnError += (e) =>
@@ -58,7 +58,7 @@ namespace sc_t3
             {
                 string message = System.Text.Encoding.UTF8.GetString(bytes);
                 Root j = JsonUtility.FromJson<Root>(message);
-                OnMessage?.Invoke(j.doc);
+                callback?.Invoke(j.doc);
                
             };
           

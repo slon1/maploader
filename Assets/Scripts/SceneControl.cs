@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 namespace sc_t3
 {
@@ -8,21 +9,18 @@ namespace sc_t3
 
         private MeshGen meshGen;
 
-        void Awake()
+       
+        private IEnumerator Start()
         {
-            wssClient=GetComponent<WssClient>();
+            wssClient = GetComponent<WssClient>();
             meshGen = new MeshGen(256);
+            yield return new WaitUntil(()=>wssClient.IsSocketOpen);
+            wssClient.SendRequest(WssClient_OnMessage);
         }
-        private void OnEnable()
-        {
-            wssClient.OnMessage += WssClient_OnMessage;
-        }
-        private void OnDisable()
-        {
-            wssClient.OnMessage -= WssClient_OnMessage;
-        }
+       
         private void WssClient_OnMessage(Doc doc)
         {
+            
             int mapLenSqrt = 16;
             if (doc.map.Count != mapLenSqrt * mapLenSqrt)
                 return;
